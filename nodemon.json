@@ -1,0 +1,6 @@
+{
+    "env": {
+        "MONGO_PASS": "covie",
+        "JWT_KEY": "something_secret"
+    }
+}
