@@ -26,7 +26,12 @@ exports.register = (req, res, next) => {
                             _id: new mongoose.Types.ObjectId(),
                             email: req.body.email,
                             password: hash,
-                            account_type: req.body.account_type
+                            account_type: req.body.account_type,
+                            full_name: req.body.full_name,
+                            country: req.body.country,
+                            state: req.body.state,
+                            city: req.body.city,
+                            address: req.body.address
                         })
                         user.save()
                             .then(result => {
