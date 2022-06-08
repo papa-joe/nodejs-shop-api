@@ -7,10 +7,10 @@ exports.add_product = (req, res, next) => {
     const token = req.headers.authorization.split(" ")[1]
     const decoded = jwt.verify(token, process.env.JWT_KEY)
 
-    if (decoded.account_type === "Seller") {
+    if (req.body.user_data.account_type === "Seller") {
         const product = new Product({
             _id: new mongoose.Types.ObjectId(),
-            sellerid: decoded.userid,
+            sellerid: req.body.user_data.userid,
             name: req.body.name,
             quantity: req.body.quantity,
             price: req.body.price,
