@@ -6,6 +6,7 @@ const cartSchema = mongoose.Schema({
     buyerid: {type: mongoose.Schema.Types.ObjectId, required: true},
     orderid: {type: String, ref: 'Order', required: false},
     productId: {type: mongoose.Schema.Types.ObjectId, ref: 'Product', required: true},
+    sellerid: {type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true},
     quantity: { type: String, required: true },
     price: { type: String, required: true },
     status: { type: String, required: true }

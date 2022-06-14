@@ -29,6 +29,7 @@ exports.register = (req, res, next) => {
                             password: hash,
                             account_type: req.body.account_type,
                             full_name: req.body.full_name,
+                            balance: 0,
                             country: req.body.country,
                             state: req.body.state,
                             city: req.body.city,
@@ -75,7 +76,7 @@ exports.login = (req, res, next) => {
                     )
 
                     if (req.cookies.cart_cookie && user[0].account_type == 'Buyer') {
-                        Cart.findByIdAndUpdate(req.cookies.cart_cookie, { buyerid: user[0]._id }, { new: true }, (err, data) => {
+                        Cart.updateMany({buyerid: req.cookies.cart_cookie}, { buyerid: user[0]._id }, { new: true }, (err, data) => {
                             if (!err) {
                                 res.clearCookie('cart_cookie')
                                 return res.status(200).json({

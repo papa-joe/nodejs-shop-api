@@ -36,4 +36,8 @@ router.patch('/edit-product/:id', checkAuth, upload.single('productImage'), Sell
 
 router.delete('/delete-product/:id', checkAuth, SellerController.delete_product)
 
+router.get('/orders/:id', checkAuth, SellerController.orders)
+
+router.get('/orders/:id/:q', checkAuth, SellerController.order)
+
 module.exports = router

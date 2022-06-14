@@ -12,6 +12,7 @@ const userSchema = mongoose.Schema({
     password: { type: String, required: true },
     account_type: { type: String, required: true },
     full_name: { type: String, required: true },
+    balance: { type: Number, required: true },
     country: { type: String, required: true },
     state: { type: String, required: true },
     city: { type: String, required: true },
