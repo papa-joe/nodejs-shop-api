@@ -9,6 +9,8 @@ const userSchema = mongoose.Schema({
     price: { type: String, required: true },
     productImage: {type: String, required: false},
     sku: { type: String, required: true },
+    localShip: { type: String, required: true },
+    intShip: { type: String, required: true },
     status: { type: String, required: true }
 })
 

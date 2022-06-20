@@ -1,6 +1,7 @@
 {
     "env": {
         "MONGO_PASS": "covie",
-        "JWT_KEY": "something_secret"
+        "JWT_KEY": "something_secret",
+        "EASYPOST_API_KEY": "your_key"
     }
 }

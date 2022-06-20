@@ -1,6 +1,8 @@
 const express = require('express')
 const router = express.Router();
 const checkAuth = require('../middleware/auth')
+const labelauth = require('../middleware/label')
+const trackAuth = require('../middleware/track')
 const multer = require('multer')
 
 const upload_rules = multer.diskStorage({
@@ -36,8 +38,12 @@ router.patch('/edit-product/:id', checkAuth, upload.single('productImage'), Sell
 
 router.delete('/delete-product/:id', checkAuth, SellerController.delete_product)
 
-router.get('/orders/:id', checkAuth, SellerController.orders)
+router.get('/orders', checkAuth, SellerController.orders)
 
-router.get('/orders/:id/:q', checkAuth, SellerController.order)
+router.get('/orders/:q', checkAuth, SellerController.order)
+
+router.post('/ship/:id', checkAuth, labelauth, SellerController.ship)
+
+router.post('/track', trackAuth, SellerController.track)
 
 module.exports = router

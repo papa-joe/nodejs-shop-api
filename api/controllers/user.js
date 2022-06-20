@@ -26,6 +26,7 @@ exports.register = (req, res, next) => {
                         const user = new User({
                             _id: new mongoose.Types.ObjectId(),
                             email: req.body.email,
+                            phone: req.body.phone,
                             password: hash,
                             account_type: req.body.account_type,
                             full_name: req.body.full_name,
@@ -108,8 +109,6 @@ exports.login = (req, res, next) => {
                         message: "Unauthenticated"
                     })
                 }
-
-
             })
         })
         .catch(err => {

@@ -58,6 +58,10 @@ exports.add_to_cart = (req, res, next) => {
                             sellerid: data[0].sellerid,
                             quantity: req.body.quantity,
                             price: pr,
+                            localShip: '',
+                            intShip: '',
+                            trackingid: '',
+                            carrier: '',
                             status: 'Pending'
                         })
 
@@ -92,7 +96,7 @@ exports.remove_from_cart = (req, res, next) => {
 
     Cart.findById(req.params.id, (err, data) => {
         if (!err) {
-            if (data && data.buyerid == req.body.user_id) {
+            if (data && data.buyerid == req.body.user_id && data.status == 'Pending') {
                 Cart.findByIdAndRemove(req.params.id, (err, data) => {
                     if (!err) {
                         res.status(200).json({
@@ -131,7 +135,8 @@ exports.get_cart_items = (req, res, next) => {
 
                     let total = 0
                     data.map(t => {
-                        total = t.productId.price += total
+                        let p = t.quantity * t.productId.price
+                        total = p += total
                     })
 
                     res.status(201).json({
@@ -185,6 +190,7 @@ exports.checkout = (req, res, next) => {
                                     state: req.body.state,
                                     city: req.body.city,
                                     address: req.body.address,
+                                    zip: '',
                                     status: 'Pending'
                                 })
 
@@ -195,7 +201,6 @@ exports.checkout = (req, res, next) => {
                                                 res.status(201).json({
                                                     status: "success",
                                                     message: "Checkout successful",
-                                                    error: err
                                                 })
                                             } else {
                                                 res.status(500).json({
@@ -220,8 +225,7 @@ exports.checkout = (req, res, next) => {
                                             if (!err) {
                                                 res.status(201).json({
                                                     status: "success",
-                                                    message: "Checkout successful",
-                                                    error: err
+                                                    message: "Checkout successful"
                                                 })
                                             } else {
                                                 res.status(500).json({
@@ -269,7 +273,7 @@ exports.payment = async (req, res, next) => {
     if (req.body.user_data.account_type === "Buyer") {
         Cart.find({ buyerid: req.body.user_data.userid, status: 'Pending' })
             .select('_id quantity productId')
-            .populate('productId', 'price name sellerid')
+            .populate('productId', 'price name sellerid localShip intShip trackingid')
             .exec()
             .then(item => {
                 if (item.length >= 1) {
@@ -287,16 +291,19 @@ exports.payment = async (req, res, next) => {
                                 }
 
                                 let total = 0
+                                let shipping = 0
                                 item.map(t => {
                                     let p = t.quantity * t.productId.price
+                                    let s = t.quantity * parseInt(t.productId.localShip)
                                     total = p += total
+                                    shipping = s + shipping
                                 })
 
                                 Order.updateMany({ buyerid: req.body.user_data.userid, status: 'Pending' }, up, (err, data) => {
                                     if (!err) {
                                         Cart.updateMany({ buyerid: req.body.user_data.userid, status: 'Pending' }, up, (err, data) => {
                                             if (!err) {
-                                                rave_payment(req, res, next, total, item)
+                                                rave_payment(req, res, next, total, item, shipping)
                                             } else {
                                                 res.status(500).json({
                                                     status: "failed",
@@ -336,20 +343,21 @@ exports.payment = async (req, res, next) => {
 
 }
 
-async function rave_payment(req, res, next, total, item){
-    const flw = new Flutterwave("FLWPUBK_TEST-f11545a99d1c7e510c869440da712bdf-X", "FLWSECK_TEST-b50e24d348a32cfc55d23549d610cfa5-X");
+async function rave_payment(req, res, next, total, item, shipping) {
+    let t = total + shipping
+    const flw = new Flutterwave("your_public_key", "your_secret_key");
     const payload = {
         "card_number": req.body.card_number,
         "cvv": req.body.cvv,
         "expiry_month": req.body.expiry_month,
         "expiry_year": req.body.expiry_year,
         "currency": "NGN",
-        "amount": total.toString(),
+        "amount": t.toString(),
         "redirect_url": "https://www.google.com",
         "fullname": "Olufemi Obafunmiso",
         "email": "oviecovie@gmail.com",
         "phone_number": "07069102741",
-        "enckey": "FLWSECK_TESTfe3bf0289cc2",
+        "enckey": "your_encryption_key",
         "tx_ref": "SH-" + new Date().getTime()
     }
 
@@ -373,7 +381,7 @@ async function rave_payment(req, res, next, total, item){
             })
 
             if (callValidate.status == "success") {
-                give_value(req, res, next, callValidate, item)
+                give_value(req, res, next, callValidate, item, shipping)
             } else {
                 res.status(401).json({
                     status: "failed",
@@ -395,7 +403,7 @@ async function rave_payment(req, res, next, total, item){
 
 }
 
-async function give_value(req, res, next, callValidate, item) {
+async function give_value(req, res, next, callValidate, item, shipping) {
     const session = await mongoose.startSession();
     try {
 
@@ -404,22 +412,23 @@ async function give_value(req, res, next, callValidate, item) {
         Order.updateMany({ buyerid: req.body.user_data.userid, status: 'Pending' }, {status: 'Paid'}, (err, data) => {})
 
         item.map(t => {
-            Cart.findByIdAndUpdate( t._id, {price: t.productId.price, status: 'Paid'}, (err, data) => {})
+            Cart.findByIdAndUpdate(t._id, { price: t.productId.price, localShip: t.productId.localShip, intShip: t.productId.intShip, status: 'Paid' }, (err, data) => { })
 
             Product.findById(t.productId._id, (err, data) => {
                 Product.findByIdAndUpdate( t.productId._id, {quantity: data.quantity - t.quantity}, (err, data) => {})
             })
 
             User.findById(t.productId.sellerid, (err, data) => {
-                User.findByIdAndUpdate( t.productId.sellerid, {balance: data.balance + (t.productId.price * t.quantity)}, (err, data) => {})
+                User.findByIdAndUpdate( t.productId.sellerid, {balance: data.balance + (t.productId.price * t.quantity) + (t.productId.localShip * t.quantity)}, (err, data) => {})
             })
         })
-        
+
         await session.commitTransaction();
 
         console.log('success');
 
         res.status(200).json({
+            ship: shipping,
             status: "success",
             message: 'payment successful',
             payment_details: callValidate

@@ -1,5 +1,4 @@
 const mongoose = require('mongoose')
-const jwt = require('jsonwebtoken')
 
 let Product = require('../models/product')
 
